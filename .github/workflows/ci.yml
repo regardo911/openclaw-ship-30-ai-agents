@@ -1,0 +1,27 @@
+name: check
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The 31 command files paste as one command each
+        shell: bash
+        run: |
+          set -o pipefail
+          bash check.sh | tee check.log
+          # a glob that matches nothing exits 0, so the count is asserted here too
+          grep -qx 'checked 31 files: 31 ok, 0 failed' check.log
+
+      - name: The checker can say no
+        shell: bash
+        run: |
+          set -o pipefail
+          bash tests/check-test.sh | tee test.log
+          grep -qE '^[1-9][0-9]* assertions: [1-9][0-9]* passed, 0 failed$' test.log
+
+      - name: shellcheck
+        run: shellcheck check.sh tests/*.sh
